@@ -2,11 +2,9 @@ import { useStore } from '@/game/store';
 import { useGame } from '@/game/actions';
 import { generateChapter } from '@/game/engine';
 import { Heart, Sword, Shield, Zap, Star, Coins, Gem } from 'lucide-react';
-import { t, useLang } from '@/game/i18n';
 import type { ReactNode } from 'react';
 
 export function HomeScreen() {
-  useLang();
   const state = useStore(useGame);
   const chapter = generateChapter(state.currentChapter);
   const progressPct = Math.min(100, (state.chapterWins / chapter.winsNeeded) * 100);
@@ -24,10 +22,10 @@ export function HomeScreen() {
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-xl font-bold text-white truncate">{state.player.name}</h2>
-            <p className="text-sm text-gray-400">{t('common.level')} {state.player.level}</p>
+            <p className="text-sm text-gray-400">Уровень {state.player.level}</p>
             <div className="mt-1.5">
               <div className="flex justify-between text-xs text-gray-400 mb-0.5">
-                <span>{t('common.xp')}</span>
+                <span>Опыт</span>
                 <span>{state.player.xp} / {state.player.xpToNext}</span>
               </div>
               <div className="progress-bar">
@@ -43,31 +41,31 @@ export function HomeScreen() {
 
       {/* Resources */}
       <div className="grid grid-cols-3 gap-2">
-        <ResourcePill icon={<Coins className="w-4 h-4" />} label={t('common.gold')} value={state.player.gold} color="text-amber-400" />
-        <ResourcePill icon={<Gem className="w-4 h-4" />} label={t('common.gems')} value={state.player.gems} color="text-cyan-400" />
-        <ResourcePill icon={<Zap className="w-4 h-4" />} label={t('common.energy')} value={`${state.player.energy}/${state.player.maxEnergy}`} color="text-yellow-400" />
+        <ResourcePill icon={<Coins className="w-4 h-4" />} label="Золото" value={state.player.gold} color="text-amber-400" />
+        <ResourcePill icon={<Gem className="w-4 h-4" />} label="Кристаллы" value={state.player.gems} color="text-cyan-400" />
+        <ResourcePill icon={<Zap className="w-4 h-4" />} label="Энергия" value={`${state.player.energy}/${state.player.maxEnergy}`} color="text-yellow-400" />
       </div>
 
       {/* Stats */}
       <div className="card">
-        <h3 className="text-sm font-semibold text-gray-400 mb-3">{t('home.stats')}</h3>
+        <h3 className="text-sm font-semibold text-gray-400 mb-3">Характеристики</h3>
         <div className="grid grid-cols-2 gap-3">
-          <StatRow icon={<Heart className="w-4 h-4 text-red-400" />} label={t('common.hp')} value={`${state.player.stats.hp}/${state.player.stats.maxHp}`} />
-          <StatRow icon={<Sword className="w-4 h-4 text-orange-400" />} label={t('common.attack')} value={state.player.stats.attack} />
-          <StatRow icon={<Shield className="w-4 h-4 text-blue-400" />} label={t('common.defense')} value={state.player.stats.defense} />
-          <StatRow icon={<Star className="w-4 h-4 text-yellow-400" />} label={t('common.crit')} value={`${state.player.stats.critChance}%`} />
+          <StatRow icon={<Heart className="w-4 h-4 text-red-400" />} label="Здоровье" value={`${state.player.stats.hp}/${state.player.stats.maxHp}`} />
+          <StatRow icon={<Sword className="w-4 h-4 text-orange-400" />} label="Атака" value={state.player.stats.attack} />
+          <StatRow icon={<Shield className="w-4 h-4 text-blue-400" />} label="Защита" value={state.player.stats.defense} />
+          <StatRow icon={<Star className="w-4 h-4 text-yellow-400" />} label="Крит" value={`${state.player.stats.critChance}%`} />
         </div>
       </div>
 
       {/* Chapter progress */}
       <div className="card">
         <div className="flex justify-between items-center mb-3">
-          <h3 className="text-base font-bold text-white">{t('common.chapter')} {state.currentChapter}</h3>
-          <span className="text-xs text-gray-400">{t(chapter.titleKey || chapter.title)}</span>
+          <h3 className="text-base font-bold text-white">Глава {state.currentChapter}</h3>
+          <span className="text-xs text-gray-400">{chapter.title}</span>
         </div>
         <div className="mb-3">
           <div className="flex justify-between text-xs text-gray-400 mb-1">
-            <span>{t('home.chapterProgress', { won: state.chapterWins, needed: chapter.winsNeeded })}</span>
+            <span>Победы: {state.chapterWins} / {chapter.winsNeeded}</span>
             <span>{Math.round(progressPct)}%</span>
           </div>
           <div className="progress-bar">
@@ -78,8 +76,8 @@ export function HomeScreen() {
           </div>
         </div>
         <p className="text-xs text-gray-500">
-          {t('home.chapterHint', { needed: chapter.winsNeeded })}
-          {progressPct >= 100 && <span className="text-amber-400 font-semibold"> {t('home.bossReady')}</span>}
+          Победи {chapter.winsNeeded} обычных врагов, чтобы открыть босса.
+          {progressPct >= 100 && <span className="text-amber-400 font-semibold"> Босс готов к бою!</span>}
         </p>
       </div>
 
@@ -90,20 +88,20 @@ export function HomeScreen() {
             {follower.icon}
           </div>
           <div className="flex-1">
-            <h4 className="text-sm font-semibold text-white">{t(follower.nameKey || follower.name)}</h4>
-            <p className="text-xs text-gray-400">{t('home.follower', { lvl: follower.level, atk: follower.attack })}</p>
+            <h4 className="text-sm font-semibold text-white">{follower.name}</h4>
+            <p className="text-xs text-gray-400">Уровень {follower.level} · Атака +{follower.attack}</p>
           </div>
-          <div className="text-xs text-teal-400 font-semibold">{t('common.active')}</div>
+          <div className="text-xs text-teal-400 font-semibold">Активен</div>
         </div>
       )}
 
       {/* Total stats */}
       <div className="card">
-        <h3 className="text-sm font-semibold text-gray-400 mb-3">{t('home.statistics')}</h3>
+        <h3 className="text-sm font-semibold text-gray-400 mb-3">Статистика</h3>
         <div className="grid grid-cols-3 gap-3 text-center">
-          <StatBox label={t('home.wins')} value={state.totalBattlesWon} />
-          <StatBox label={t('home.bosses')} value={state.totalBossesDefeated} />
-          <StatBox label={t('common.chapter')} value={state.currentChapter} />
+          <StatBox label="Побед" value={state.totalBattlesWon} />
+          <StatBox label="Боссов" value={state.totalBossesDefeated} />
+          <StatBox label="Глава" value={state.currentChapter} />
         </div>
       </div>
     </div>

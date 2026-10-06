@@ -1,20 +1,18 @@
 import { useState } from 'react';
 import { EQUIPMENT_SLOTS } from '@/game/engine';
 import { rarityColor } from '@/game/ui';
-import { t, useLang } from '@/game/i18n';
 import type { Equipment, GameState } from '@/game/types';
 
 function statLine(eq: Equipment) {
   return [
-    eq.attack ? `+${eq.attack} ${t('gear.attackShort')}` : '',
-    eq.defense ? `+${eq.defense} ${t('gear.defenseShort')}` : '',
+    eq.attack ? `+${eq.attack} атк` : '',
+    eq.defense ? `+${eq.defense} защ` : '',
     eq.hp ? `+${eq.hp} HP` : '',
-    eq.critChance ? `+${eq.critChance}% ${t('gear.critShort')}` : '',
+    eq.critChance ? `+${eq.critChance}% крит` : '',
   ].filter(Boolean).join(' · ');
 }
 
 export function GearStrip({ equipped }: { equipped: GameState['player']['equipped'] }) {
-  useLang();
   const [picked, setPicked] = useState<Equipment['slot'] | null>(null);
   const slot = EQUIPMENT_SLOTS.find((s) => s.id === picked);
   const eq = picked ? equipped[picked] : undefined;
@@ -36,7 +34,7 @@ export function GearStrip({ equipped }: { equipped: GameState['player']['equippe
               style={{ borderColor: color ? `${color}aa` : 'rgba(255,255,255,0.12)', boxShadow: color ? `inset 0 0 12px ${color}33` : undefined }}
             >
               <span className={`text-xl leading-none ${item ? '' : 'opacity-25 grayscale'}`}>{item ? item.icon : s.icon}</span>
-              <span className="text-[9px] text-gray-400 leading-none">{t(s.nameKey)}</span>
+              <span className="text-[9px] text-gray-400 leading-none">{s.name}</span>
             </button>
           );
         })}
@@ -46,10 +44,10 @@ export function GearStrip({ equipped }: { equipped: GameState['player']['equippe
           {eq ? (
             <>
               <span className="font-semibold" style={{ color: rarityColor(eq.rarity) }}>{eq.name}</span>
-              <span className="text-gray-400"> · {t('gear.level', { n: eq.level })}{statLine(eq) ? ` · ${statLine(eq)}` : ''}</span>
+              <span className="text-gray-400"> · ур. {eq.level}{statLine(eq) ? ` · ${statLine(eq)}` : ''}</span>
             </>
           ) : (
-            <span className="text-gray-500">{t('gear.empty', { slot: t(slot.nameKey) })}</span>
+            <span className="text-gray-500">{slot.name}: пусто — загляни в магазин или кузницу</span>
           )}
         </p>
       )}

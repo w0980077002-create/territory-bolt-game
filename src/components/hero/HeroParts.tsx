@@ -3,7 +3,6 @@ import { Heart, Shield, Sword, Star, Flame } from 'lucide-react';
 import { EQUIPMENT_SLOTS } from '@/game/engine';
 import { SLOT_ART } from '@/game/art';
 import { rarityColor } from '@/game/ui';
-import { t, useLang } from '@/game/i18n';
 import type { Equipment } from '@/game/types';
 
 export interface GearView {
@@ -28,21 +27,20 @@ export interface StatView {
 
 export function gearStatLine(g: GearView) {
   return [
-    g.attack ? `+${g.attack} ${t('heroParts.strength')}` : '',
-    g.defense ? `+${g.defense} ${t('heroParts.fortitude')}` : '',
+    g.attack ? `+${g.attack} сила` : '',
+    g.defense ? `+${g.defense} стойкость` : '',
     g.hp ? `+${g.hp} HP` : '',
-    g.critChance ? `+${g.critChance}% ${t('heroParts.critChance')}` : '',
+    g.critChance ? `+${g.critChance}% крит` : '',
   ].filter(Boolean).join(' · ');
 }
 
 export function StatGrid({ stats }: { stats: StatView }) {
-  useLang();
   const rows = [
-    { label: t('heroParts.strength'), value: stats.attack, icon: Sword, tone: 'text-orange-300' },
-    { label: t('heroParts.fortitude'), value: stats.defense, icon: Shield, tone: 'text-sky-300' },
-    { label: t('heroParts.health'), value: stats.maxHp, icon: Heart, tone: 'text-red-300' },
-    { label: t('heroParts.critChance'), value: `${stats.critChance}%`, icon: Star, tone: 'text-yellow-300' },
-    ...(stats.critDamage !== undefined ? [{ label: t('heroParts.critDamage'), value: `+${stats.critDamage}%`, icon: Flame, tone: 'text-amber-300' }] : []),
+    { label: 'Сила', value: stats.attack, icon: Sword, tone: 'text-orange-300' },
+    { label: 'Стойкость', value: stats.defense, icon: Shield, tone: 'text-sky-300' },
+    { label: 'Здоровье', value: stats.maxHp, icon: Heart, tone: 'text-red-300' },
+    { label: 'Шанс крита', value: `${stats.critChance}%`, icon: Star, tone: 'text-yellow-300' },
+    ...(stats.critDamage !== undefined ? [{ label: 'Сила крита', value: `+${stats.critDamage}%`, icon: Flame, tone: 'text-amber-300' }] : []),
   ];
   return (
     <div className="grid grid-cols-2 gap-2">
@@ -74,14 +72,13 @@ function Slot({ slot, gear, active, onTap }: { slot: Equipment['slot']; gear?: G
 }
 
 export function PaperDoll({ gear, followerUnlocked }: { gear: GearMap; followerUnlocked: boolean }) {
-  useLang();
   const [picked, setPicked] = useState<Equipment['slot'] | null>(null);
   const left = EQUIPMENT_SLOTS.slice(0, 3);
   const right = EQUIPMENT_SLOTS.slice(3, 6);
   const bottom = EQUIPMENT_SLOTS[6];
   const tap = (s: Equipment['slot']) => setPicked((p) => (p === s ? null : s));
   const g = picked ? gear[picked] : undefined;
-  const slotName = EQUIPMENT_SLOTS.find((s) => s.id === picked)?.nameKey;
+  const slotName = EQUIPMENT_SLOTS.find((s) => s.id === picked)?.name;
 
   return (
     <div className="rounded-2xl border border-amber-500/15 bg-gradient-to-b from-[#1a1d25] to-[#0f1115] p-3">
@@ -104,13 +101,13 @@ export function PaperDoll({ gear, followerUnlocked }: { gear: GearMap; followerU
           g ? (
             <span className="animate-fade-in">
               <span className="font-semibold" style={{ color: rarityColor(g.rarity) }}>{g.name}</span>
-              <span className="text-gray-400"> · {t('heroParts.level', { n: g.level })}{gearStatLine(g) ? ` · ${gearStatLine(g)}` : ''}</span>
+              <span className="text-gray-400"> · ур. {g.level}{gearStatLine(g) ? ` · ${gearStatLine(g)}` : ''}</span>
             </span>
           ) : (
-            <span className="text-gray-500">{t('heroParts.empty', { slot: t(slotName!) })}</span>
+            <span className="text-gray-500">{slotName}: пусто</span>
           )
         ) : (
-          <span className="text-gray-500">{t('heroParts.gearHint')}</span>
+          <span className="text-gray-500">Нажми на ячейку, чтобы увидеть предмет</span>
         )}
       </p>
     </div>

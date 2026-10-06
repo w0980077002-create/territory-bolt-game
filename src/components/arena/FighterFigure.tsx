@@ -1,5 +1,4 @@
 import type { CSSProperties } from 'react';
-import { t, useLang } from '@/game/i18n';
 import type { StrikeEvent } from '@/game/useStrikeQueue';
 
 interface Props {
@@ -13,7 +12,6 @@ interface Props {
 }
 
 export function FighterFigure({ src, name, dir, alive, strike, idleSeconds, className }: Props) {
-  useLang();
   const role = !strike ? null : strike.attacker === name ? 'attacker' : strike.target === name ? 'target' : null;
   const tone = strike?.tone;
   const motion = role === 'attacker' ? 'animate-lunge'
@@ -44,12 +42,11 @@ export function FighterFigure({ src, name, dir, alive, strike, idleSeconds, clas
 }
 
 function Impact({ strike }: { strike: StrikeEvent }) {
-  useLang();
   const crit = strike.tone === 'crit';
   if (strike.tone === 'dodge') {
     return (
       <span className="absolute left-1/2 top-[22%] z-30 animate-dmg text-base font-black text-cyan-200 whitespace-nowrap [text-shadow:0_2px_6px_rgba(0,0,0,0.9)]">
-        {t('fighter.dodge')}
+        Уклон!
       </span>
     );
   }
@@ -58,7 +55,7 @@ function Impact({ strike }: { strike: StrikeEvent }) {
       <>
         <span className="absolute left-1/2 top-[38%] -ml-9 -mt-9 w-[72px] h-[72px] rounded-full border-2 border-sky-300/90 bg-sky-400/20 shadow-[0_0_24px_rgba(56,189,248,0.7)] animate-shield-pulse pointer-events-none" />
         <span className="absolute left-1/2 top-[22%] z-30 animate-dmg text-base font-black text-sky-200 whitespace-nowrap [text-shadow:0_2px_6px_rgba(0,0,0,0.9)]">
-          {t('fighter.block')}
+          Блок
         </span>
       </>
     );
@@ -77,7 +74,7 @@ function Impact({ strike }: { strike: StrikeEvent }) {
           crit ? 'text-3xl text-amber-300' : 'text-2xl text-red-500'
         }`}
       >
-        {crit && <span className="block text-[10px] tracking-[0.3em] text-amber-200 text-center">{t('fighter.crit')}</span>}
+        {crit && <span className="block text-[10px] tracking-[0.3em] text-amber-200 text-center">КРИТ</span>}
         −{strike.amount ?? 0}
       </span>
     </>

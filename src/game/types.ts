@@ -13,7 +13,6 @@ export interface Equipment {
   id: string;
   slot: 'helmet' | 'amulet' | 'armor' | 'weapon' | 'shield' | 'ring' | 'boots';
   name: string;
-  nameKey?: string;
   icon: string;
   rarity: 'common' | 'rare' | 'epic' | 'legendary';
   attack?: number;
@@ -26,14 +25,12 @@ export interface Equipment {
 export interface InventoryItem {
   id: string;
   name: string;
-  nameKey?: string;
   icon: string;
   type: 'potion' | 'elixir' | 'material' | 'equipment' | 'arena';
   rarity: 'common' | 'rare' | 'epic' | 'legendary';
   qty: number;
   arenaEffect?: ArenaEffect;
   description: string;
-  descKey?: string;
   effect?: {
     stat: keyof PlayerStats;
     value: number;
@@ -45,7 +42,6 @@ export interface InventoryItem {
 export interface Enemy {
   id: string;
   name: string;
-  nameKey?: string;
   art: string;
   hp: number;
   maxHp: number;
@@ -60,7 +56,6 @@ export interface Enemy {
 export interface Chapter {
   number: number;
   title: string;
-  titleKey?: string;
   enemies: Enemy[];
   boss: Enemy;
   winsNeeded: number;
@@ -71,9 +66,7 @@ export interface Chapter {
 export interface Quest {
   id: string;
   title: string;
-  titleKey?: string;
   description: string;
-  descKey?: string;
   icon: string;
   target: number;
   current: number;
@@ -88,9 +81,7 @@ export interface Quest {
 export interface Achievement {
   id: string;
   title: string;
-  titleKey?: string;
   description: string;
-  descKey?: string;
   icon: string;
   target: number;
   current: number;
@@ -101,20 +92,17 @@ export interface Achievement {
 export interface Follower {
   id: string;
   name: string;
-  nameKey?: string;
   icon: string;
   level: number;
   attack: number;
   defense: number;
   unlocked: boolean;
   description: string;
-  descKey?: string;
 }
 
 export interface ShopItem {
   id: string;
   name: string;
-  nameKey?: string;
   icon: string;
   type: 'potion' | 'elixir' | 'equipment' | 'gem_pack' | 'material' | 'arena' | 'stone';
   amount?: number;
@@ -123,7 +111,6 @@ export interface ShopItem {
   arenaEffect?: ArenaEffect;
   priceGems?: number;
   description: string;
-  descKey?: string;
   effect?: {
     stat: keyof PlayerStats;
     value: number;

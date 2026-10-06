@@ -6,7 +6,6 @@ import {
   xpForLevel,
 } from './engine';
 import type { InventoryItem, ShopItem, Equipment, Enemy } from './types';
-import { t } from './i18n';
 
 export const useGame = create<GameState>(createInitialGame());
 
@@ -128,8 +127,7 @@ export function buyItem(state: GameState, shopItem: ShopItem): GameState | null 
       type: 'equipment',
       rarity: shopItem.rarity,
       qty: 1,
-      description: '',
-      descKey: 'items.levelRarity',
+      description: `Уровень ${newEquipment.level} · ${newEquipment.rarity}`,
       equipment: newEquipment,
     });
   } else {
@@ -182,8 +180,7 @@ export function equipItem(state: GameState, item: InventoryItem): GameState {
       type: 'equipment',
       rarity: currentEquipped.rarity,
       qty: 1,
-      description: '',
-      descKey: 'items.levelRarity',
+      description: `Уровень ${currentEquipped.level} · ${currentEquipped.rarity}`,
       equipment: currentEquipped,
     });
   }
@@ -204,13 +201,11 @@ export function unequipItem(state: GameState, slot: Equipment['slot']): GameStat
   const inventory = [...state.inventory, {
     id: `inv_${Date.now()}_${Math.random().toString(36).slice(2)}`,
     name: eq.name,
-    nameKey: eq.nameKey,
     icon: eq.icon,
     type: 'equipment' as const,
     rarity: eq.rarity,
     qty: 1,
-    description: '',
-    descKey: 'items.levelRarity',
+    description: `Уровень ${eq.level} · ${eq.rarity}`,
     equipment: eq,
   }];
 

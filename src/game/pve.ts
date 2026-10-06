@@ -1,7 +1,6 @@
 import { ZONES, type Zone } from './arenaApi';
 import type { Enemy, GameState, InventoryItem } from './types';
 import { getComputedStats } from './engine';
-import { t } from './i18n';
 
 export interface PveSide {
   name: string;
@@ -84,26 +83,24 @@ export type PotionUse =
   | { ok: false; text: string };
 
 export function applyPotion(hero: PveSide, item: InventoryItem): PotionUse {
-  const name = item.nameKey ? t(item.nameKey) : item.name;
-  if (item.arenaEffect) return { ok: false, text: t('pve.potionArenaOnly', { name }) };
+  if (item.arenaEffect) return { ok: false, text: `${item.name} действует только на арене` };
   const e = item.effect;
-  if (!e) return { ok: false, text: t('pve.potionNoUse') };
+  if (!e) return { ok: false, text: 'Этот предмет нельзя выпить в бою' };
   if (e.stat === 'hp') {
-    if (hero.hp >= hero.maxHp) return { ok: false, text: t('pve.hpFull') };
+    if (hero.hp >= hero.maxHp) return { ok: false, text: 'Здоровье уже полное' };
     const hp = Math.min(hero.maxHp, hero.hp + e.value);
-    return { ok: true, hero: { ...hero, hp }, text: t('pve.hpRestored', { n: hp - hero.hp }) };
+    return { ok: true, hero: { ...hero, hp }, text: `+${hp - hero.hp} HP` };
   }
-  if (e.stat === 'attack') return { ok: true, hero: { ...hero, attack: hero.attack + e.value }, text: t('pve.atkBoost', { n: e.value }) };
-  if (e.stat === 'defense') return { ok: true, hero: { ...hero, defense: hero.defense + e.value }, text: t('pve.defBoost', { n: e.value }) };
-  if (e.stat === 'critChance') return { ok: true, hero: { ...hero, critChance: hero.critChance + e.value }, text: t('pve.critBoost', { n: e.value }) };
-  return { ok: false, text: t('pve.potionNoUse') };
+  if (e.stat === 'attack') return { ok: true, hero: { ...hero, attack: hero.attack + e.value }, text: `+${e.value} к атаке до конца боя` };
+  if (e.stat === 'defense') return { ok: true, hero: { ...hero, defense: hero.defense + e.value }, text: `+${e.value} к защите до конца боя` };
+  if (e.stat === 'critChance') return { ok: true, hero: { ...hero, critChance: hero.critChance + e.value }, text: `+${e.value}% к криту до конца боя` };
+  return { ok: false, text: 'Этот предмет нельзя выпить в бою' };
 }
 
 export function describeHit(h: PveHit): string {
-  const zoneLabel = zoneOf(h.zone).labelKey ? t(zoneOf(h.zone).labelKey!) : zoneOf(h.zone).label;
-  const zone = zoneLabel.toLowerCase();
-  if (h.tone === 'dodge') return t('pve.dodge', { target: h.target, attacker: h.attacker });
-  if (h.tone === 'block') return t('pve.block', { target: h.target, zone });
-  if (h.tone === 'crit') return t('pve.crit', { attacker: h.attacker, zone, amount: h.amount });
-  return t('pve.hit', { attacker: h.attacker, zone, amount: h.amount });
+  const zone = zoneOf(h.zone).label.toLowerCase();
+  if (h.tone === 'dodge') return `${h.target} уклоняется от удара ${h.attacker}`;
+  if (h.tone === 'block') return `${h.target} блокирует удар в ${zone}`;
+  if (h.tone === 'crit') return `${h.attacker} — КРИТ в ${zone}: −${h.amount}`;
+  return `${h.attacker} бьёт в ${zone}: −${h.amount}`;
 }

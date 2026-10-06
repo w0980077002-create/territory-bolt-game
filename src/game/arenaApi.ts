@@ -1,22 +1,17 @@
 import { supabase } from './supabase';
 import type { ArenaItemCode } from './belt';
-import { t } from './i18n';
 
 export type ArenaMode = 'duel' | 'team' | 'chaos';
 export type Zone = 'head' | 'chest' | 'belly' | 'legs';
 
-export const ZONES: { id: Zone; label: string; labelKey: string; mult: number }[] = [
-  { id: 'head', label: 'Голова', labelKey: 'zones.head', mult: 1.25 },
-  { id: 'chest', label: 'Грудь', labelKey: 'zones.chest', mult: 1 },
-  { id: 'belly', label: 'Живот', labelKey: 'zones.belly', mult: 1 },
-  { id: 'legs', label: 'Ноги', labelKey: 'zones.legs', mult: 0.85 },
+export const ZONES: { id: Zone; label: string; mult: number }[] = [
+  { id: 'head', label: 'Голова', mult: 1.25 },
+  { id: 'chest', label: 'Грудь', mult: 1 },
+  { id: 'belly', label: 'Живот', mult: 1 },
+  { id: 'legs', label: 'Ноги', mult: 0.85 },
 ];
 
-export const TEAM_KEYS: Record<number, string> = { 1: 'arena.teamWolves', 2: 'arena.teamRavens' };
-
-export function teamName(team: number): string {
-  return t(TEAM_KEYS[team] ?? 'arena.teamWolves');
-}
+export const TEAM_NAMES: Record<number, string> = { 1: 'Волки', 2: 'Вороны' };
 
 export interface ArenaFighter {
   id: string;
@@ -79,27 +74,27 @@ export interface ArenaReward {
   losses: number;
 }
 
-const ERROR_KEYS: Record<string, string> = {
-  not_active: 'errors.not_active',
-  not_member: 'errors.not_member',
-  dead: 'errors.dead',
-  invalid_zones: 'errors.invalid_zones',
-  invalid_target: 'errors.invalid_target',
-  already_moved: 'errors.already_moved',
-  too_fast: 'errors.too_fast',
-  min_timeout: 'errors.min_timeout',
-  revive_limit: 'errors.revive_limit',
-  no_player: 'errors.no_player',
-  vip_required: 'errors.vip_required',
-  item_round: 'errors.item_round',
-  full_hp: 'errors.full_hp',
-  buff_active: 'errors.buff_active',
+const ERRORS: Record<string, string> = {
+  not_active: 'Бой уже не идёт',
+  not_member: 'Ты не участвуешь в этом бою',
+  dead: 'Павшие не могут действовать',
+  invalid_zones: 'Выбери 1 зону удара и 2 разные зоны защиты',
+  invalid_target: 'Эта цель недоступна',
+  already_moved: 'Ход в этом раунде уже сделан',
+  too_fast: 'Не так быстро',
+  min_timeout: 'Тайм уже минимальный — 30 сек.',
+  revive_limit: 'Адреналин можно использовать не больше 3 раз за бой',
+  no_player: 'Профиль героя не найден',
+  vip_required: 'Автобой доступен с VIP 3 уровня',
+  item_round: 'Только одно зелье за раунд',
+  full_hp: 'Здоровье и так полное',
+  buff_active: 'Этот эликсир уже действует в этом бою',
 };
 
 function friendly(error: { message?: string } | null): string {
-  const code = Object.keys(ERROR_KEYS).find((k) => error?.message?.includes(k));
+  const code = Object.keys(ERRORS).find((k) => error?.message?.includes(k));
   if (!code) console.error('arena error', error);
-  return code ? t(ERROR_KEYS[code]) : t('errors.connection');
+  return code ? ERRORS[code] : 'Связь с ареной прервалась. Попробуй ещё раз.';
 }
 
 async function call<T>(fn: string, args: Record<string, unknown> = {}): Promise<T> {
