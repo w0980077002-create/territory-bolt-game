@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from './supabase';
 import { getTelegramInitData, initTelegramWebApp, getTelegramUser } from './telegram';
+import { t } from './i18n';
 
 export interface AuthUser {
   id: string;
@@ -57,7 +58,7 @@ export function useAuth() {
     const session = data.session;
 
     if (tgUser && initData) {
-      const tgName = tgUser.first_name || tgUser.username || 'Герой';
+      const tgName = tgUser.first_name || tgUser.username || t('app.defaultHero');
       if (session) {
         const profile = await profileFor(session.user.id, tgName);
         if (profile.telegramId === tgUser.id) {
@@ -73,7 +74,7 @@ export function useAuth() {
     }
 
     if (session) {
-      setAuthState({ status: 'authenticated', user: await profileFor(session.user.id, 'Герой') });
+      setAuthState({ status: 'authenticated', user: await profileFor(session.user.id, t('app.defaultHero')) });
       return;
     }
 
@@ -81,13 +82,13 @@ export function useAuth() {
   }, []);
 
   const startAsGuest = useCallback(async (heroName: string) => {
-    const name = heroName.trim().slice(0, 20) || 'Герой';
+    const name = heroName.trim().slice(0, 20) || t('app.defaultHero');
     setAuthState({ status: 'loading' });
     const email = `guest_${crypto.randomUUID()}@territory.game`;
     const password = `${crypto.randomUUID()}Aa1!`;
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error || !data.user || !data.session) {
-      setAuthState({ status: 'guest', error: 'Не удалось создать героя. Попробуй ещё раз.' });
+      setAuthState({ status: 'guest', error: t('app.createError') });
       return;
     }
     setAuthState({
@@ -103,7 +104,7 @@ export function useAuth() {
 
   useEffect(() => {
     initTelegramWebApp();
-    restore().catch(() => setAuthState({ status: 'guest', error: 'Нет связи с сервером' }));
+    restore().catch(() => setAuthState({ status: 'guest', error: t('app.noConnection') }));
   }, [restore]);
 
   return { authState, startAsGuest, signOut };

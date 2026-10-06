@@ -2,10 +2,12 @@ import { useStore } from '@/game/store';
 import { useGame } from '@/game/actions';
 import { getComputedStats, EQUIPMENT_SLOTS } from '@/game/engine';
 import { rarityColor } from '@/game/ui';
+import { t, useLang } from '@/game/i18n';
 import { User, Heart, Sword, Shield, Star, Zap, Coins, Gem } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 export function ProfileScreen() {
+  useLang();
   const state = useStore(useGame);
   const computed = getComputedStats(state);
 
@@ -19,7 +21,7 @@ export function ProfileScreen() {
             🦸
           </div>
           <h2 className="text-xl font-bold text-white">{state.player.name}</h2>
-          <p className="text-sm text-gray-400">Уровень {state.player.level}</p>
+          <p className="text-sm text-gray-400">{t('common.level')} {state.player.level}</p>
           <div className="flex gap-3 mt-3 text-sm">
             <span className="flex items-center gap-1 text-amber-400">
               <Coins className="w-4 h-4" /> {state.player.gold}
@@ -36,47 +38,47 @@ export function ProfileScreen() {
 
       {/* Base stats */}
       <div className="card">
-        <h3 className="text-sm font-semibold text-gray-400 mb-3">Базовые характеристики</h3>
+        <h3 className="text-sm font-semibold text-gray-400 mb-3">{t('profile.baseStats')}</h3>
         <div className="grid grid-cols-2 gap-3">
-          <StatBox icon={<Heart className="w-4 h-4 text-red-400" />} label="Здоровье" value={`${state.player.stats.maxHp}`} />
-          <StatBox icon={<Sword className="w-4 h-4 text-orange-400" />} label="Атака" value={state.player.stats.attack} />
-          <StatBox icon={<Shield className="w-4 h-4 text-blue-400" />} label="Защита" value={state.player.stats.defense} />
-          <StatBox icon={<Star className="w-4 h-4 text-yellow-400" />} label="Крит шанс" value={`${state.player.stats.critChance}%`} />
+          <StatBox icon={<Heart className="w-4 h-4 text-red-400" />} label={t('common.hp')} value={`${state.player.stats.maxHp}`} />
+          <StatBox icon={<Sword className="w-4 h-4 text-orange-400" />} label={t('common.attack')} value={state.player.stats.attack} />
+          <StatBox icon={<Shield className="w-4 h-4 text-blue-400" />} label={t('common.defense')} value={state.player.stats.defense} />
+          <StatBox icon={<Star className="w-4 h-4 text-yellow-400" />} label={t('common.critChance')} value={`${state.player.stats.critChance}%`} />
         </div>
       </div>
 
       {/* Computed stats (with equipment) */}
       <div className="card">
-        <h3 className="text-sm font-semibold text-gray-400 mb-3">С учётом экипировки</h3>
+        <h3 className="text-sm font-semibold text-gray-400 mb-3">{t('profile.computedStats')}</h3>
         <div className="grid grid-cols-2 gap-3">
-          <StatBox icon={<Heart className="w-4 h-4 text-red-400" />} label="Здоровье" value={`${computed.maxHp}`} />
-          <StatBox icon={<Sword className="w-4 h-4 text-orange-400" />} label="Атака" value={computed.attack} />
-          <StatBox icon={<Shield className="w-4 h-4 text-blue-400" />} label="Защита" value={computed.defense} />
-          <StatBox icon={<Star className="w-4 h-4 text-yellow-400" />} label="Крит шанс" value={`${computed.critChance}%`} />
+          <StatBox icon={<Heart className="w-4 h-4 text-red-400" />} label={t('common.hp')} value={`${computed.maxHp}`} />
+          <StatBox icon={<Sword className="w-4 h-4 text-orange-400" />} label={t('common.attack')} value={computed.attack} />
+          <StatBox icon={<Shield className="w-4 h-4 text-blue-400" />} label={t('common.defense')} value={computed.defense} />
+          <StatBox icon={<Star className="w-4 h-4 text-yellow-400" />} label={t('common.critChance')} value={`${computed.critChance}%`} />
         </div>
       </div>
 
       {/* Equipment */}
       <div className="card">
-        <h3 className="text-sm font-semibold text-gray-400 mb-3">Экипировка</h3>
+        <h3 className="text-sm font-semibold text-gray-400 mb-3">{t('profile.equipment')}</h3>
         <div className="space-y-2">
-          {EQUIPMENT_SLOTS.map(({ id: slot, name }) => {
-            const eq = state.player.equipped[slot];
+          {EQUIPMENT_SLOTS.map((s) => {
+            const eq = state.player.equipped[s.id];
             return (
-              <div key={slot} className="flex items-center gap-3 py-1">
+              <div key={s.id} className="flex items-center gap-3 py-1">
                 <div className="w-10 h-10 rounded-lg bg-black/30 flex items-center justify-center text-lg shrink-0"
                   style={eq ? { border: `1px solid ${rarityColor(eq.rarity)}` } : undefined}
                 >
                   {eq ? eq.icon : '⬜'}
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs text-gray-500">{name}</p>
+                  <p className="text-xs text-gray-500">{t(s.nameKey)}</p>
                   {eq ? (
                     <p className="text-sm font-medium" style={{ color: rarityColor(eq.rarity) }}>
-                      {eq.name}
+                      {t(eq.nameKey || eq.name)}
                     </p>
                   ) : (
-                    <p className="text-sm text-gray-600">Пусто</p>
+                    <p className="text-sm text-gray-600">{t('common.empty')}</p>
                   )}
                 </div>
                 {eq && (
@@ -94,19 +96,19 @@ export function ProfileScreen() {
 
       {/* Battle record */}
       <div className="card">
-        <h3 className="text-sm font-semibold text-gray-400 mb-3">Боевой путь</h3>
+        <h3 className="text-sm font-semibold text-gray-400 mb-3">{t('profile.battleRecord')}</h3>
         <div className="grid grid-cols-3 gap-3 text-center">
           <div>
             <div className="text-2xl font-bold text-white">{state.totalBattlesWon}</div>
-            <div className="text-xs text-gray-500">Побед</div>
+            <div className="text-xs text-gray-500">{t('profile.wins')}</div>
           </div>
           <div>
             <div className="text-2xl font-bold text-amber-400">{state.totalBossesDefeated}</div>
-            <div className="text-xs text-gray-500">Боссов</div>
+            <div className="text-xs text-gray-500">{t('profile.bosses')}</div>
           </div>
           <div>
             <div className="text-2xl font-bold text-teal-400">{state.currentChapter}</div>
-            <div className="text-xs text-gray-500">Глава</div>
+            <div className="text-xs text-gray-500">{t('profile.chapter')}</div>
           </div>
         </div>
       </div>

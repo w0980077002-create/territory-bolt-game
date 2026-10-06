@@ -7,10 +7,28 @@ import { SLOT_ART } from '@/game/art';
 import { ItemArt } from './ui/ItemArt';
 import { BeltCells } from './ui/BeltCells';
 import { rarityColor, rarityGlow } from '@/game/ui';
+import { t, useLang } from '@/game/i18n';
 import type { InventoryItem } from '@/game/types';
 import { Package, Check, X, ArrowDownUp } from 'lucide-react';
 
+/** Resolve an item's display name via i18n, falling back to the raw name. */
+function itemName(item: InventoryItem): string {
+  return t(item.nameKey || item.name);
+}
+
+/** Resolve an item's display description via i18n, interpolating levelRarity when needed. */
+function itemDesc(item: InventoryItem): string {
+  if (item.descKey) {
+    if (item.descKey === 'items.levelRarity') {
+      return t(item.descKey, { n: item.equipment?.level ?? 0, rarity: t('rarity.' + item.rarity) });
+    }
+    return t(item.descKey);
+  }
+  return item.description;
+}
+
 export function InventoryScreen({ initialTab = 'items' }: { initialTab?: 'items' | 'equipment' }) {
+  useLang(); // re-render on language change
   const state = useStore(useGame);
   const arena = useStore(useArena);
   const [tab, setTab] = useState<'items' | 'equipment'>(initialTab);
@@ -24,7 +42,7 @@ export function InventoryScreen({ initialTab = 'items' }: { initialTab?: 'items'
   const toBelt = (item: InventoryItem) => {
     const next = putInBelt(state, item.id, beltContext(state, arena.wins));
     if (!next) {
-      setBeltNote('На поясе нет свободного слота');
+      setBeltNote(t('inventory.beltFull'));
       return;
     }
     useGame.set(next);
@@ -40,13 +58,13 @@ export function InventoryScreen({ initialTab = 'items' }: { initialTab?: 'items'
           className={`flex-1 btn ${tab === 'items' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setTab('items')}
         >
-          <Package className="w-4 h-4 inline mr-1" /> Предметы
+          <Package className="w-4 h-4 inline mr-1" /> {t('inventory.items')}
         </button>
         <button
           className={`flex-1 btn ${tab === 'equipment' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setTab('equipment')}
         >
-          <ArrowDownUp className="w-4 h-4 inline mr-1" /> Экипировка
+          <ArrowDownUp className="w-4 h-4 inline mr-1" /> {t('inventory.equipment')}
         </button>
       </div>
 
@@ -54,8 +72,8 @@ export function InventoryScreen({ initialTab = 'items' }: { initialTab?: 'items'
         <>
           <div className="rounded-2xl border border-amber-500/15 bg-gray-900/70 p-3">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-semibold text-gray-300">Пояс</h3>
-              <span className="text-[11px] text-gray-500">нажми на слот, чтобы снять</span>
+              <h3 className="text-sm font-semibold text-gray-300">{t('inventory.belt')}</h3>
+              <span className="text-[11px] text-gray-500">{t('inventory.beltHint')}</span>
             </div>
             <BeltCells
               belt={state.belt}
@@ -66,7 +84,7 @@ export function InventoryScreen({ initialTab = 'items' }: { initialTab?: 'items'
           {/* Consumables */}
           {consumables.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-400 mb-2 px-1">Расходники</h3>
+              <h3 className="text-sm font-semibold text-gray-400 mb-2 px-1">{t('inventory.consumables')}</h3>
               <div className="grid grid-cols-2 gap-2">
                 {consumables.map((item) => (
                   <ItemCard key={item.id} item={item} onClick={() => setSelected(item)} />
@@ -78,7 +96,7 @@ export function InventoryScreen({ initialTab = 'items' }: { initialTab?: 'items'
           {/* Materials */}
           {materials.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-400 mb-2 px-1">Материалы</h3>
+              <h3 className="text-sm font-semibold text-gray-400 mb-2 px-1">{t('inventory.materials')}</h3>
               <div className="grid grid-cols-2 gap-2">
                 {materials.map((item) => (
                   <ItemCard key={item.id} item={item} onClick={() => setSelected(item)} />
@@ -90,7 +108,7 @@ export function InventoryScreen({ initialTab = 'items' }: { initialTab?: 'items'
           {consumables.length === 0 && materials.length === 0 && (
             <div className="card text-center py-8 text-gray-500">
               <Package className="w-12 h-12 mx-auto mb-2 opacity-30" />
-              <p>Инвентарь пуст</p>
+              <p>{t('inventory.empty')}</p>
             </div>
           )}
         </>
@@ -100,9 +118,10 @@ export function InventoryScreen({ initialTab = 'items' }: { initialTab?: 'items'
         <>
           {/* Equipped slots */}
           <div className="card">
-            <h3 className="text-sm font-semibold text-gray-400 mb-3">Надето</h3>
+            <h3 className="text-sm font-semibold text-gray-400 mb-3">{t('inventory.equipped')}</h3>
             <div className="space-y-2">
-              {EQUIPMENT_SLOTS.map(({ id: slot, name }) => {
+              {EQUIPMENT_SLOTS.map((s) => {
+                const slot = s.id;
                 const eq = state.player.equipped[slot];
                 return (
                   <div key={slot} className="flex items-center gap-3">
@@ -113,13 +132,13 @@ export function InventoryScreen({ initialTab = 'items' }: { initialTab?: 'items'
                       <img src={SLOT_ART[slot]} alt="" className={`w-9 h-9 object-contain ${eq ? '' : 'opacity-20 grayscale'}`} />
                     </div>
                     <div className="flex-1">
-                      <p className="text-xs text-gray-500">{name}</p>
+                      <p className="text-xs text-gray-500">{t(s.nameKey)}</p>
                       {eq ? (
                         <p className="text-sm font-medium" style={{ color: rarityColor(eq.rarity) }}>
-                          {eq.name}
+                          {itemName(eq)}
                         </p>
                       ) : (
-                        <p className="text-sm text-gray-600">Пусто</p>
+                        <p className="text-sm text-gray-600">{t('common.empty')}</p>
                       )}
                     </div>
                     {eq && (
@@ -127,7 +146,7 @@ export function InventoryScreen({ initialTab = 'items' }: { initialTab?: 'items'
                         className="btn-ghost text-xs px-2 py-1"
                         onClick={() => useGame.set(unequipItem(state, slot))}
                       >
-                        Снять
+                        {t('common.unequip')}
                       </button>
                     )}
                   </div>
@@ -139,7 +158,7 @@ export function InventoryScreen({ initialTab = 'items' }: { initialTab?: 'items'
           {/* Equipment in inventory */}
           {equipment.length > 0 ? (
             <div>
-              <h3 className="text-sm font-semibold text-gray-400 mb-2 px-1">В сумке</h3>
+              <h3 className="text-sm font-semibold text-gray-400 mb-2 px-1">{t('inventory.inBag')}</h3>
               <div className="grid grid-cols-2 gap-2">
                 {equipment.map((item) => (
                   <ItemCard key={item.id} item={item} onClick={() => setSelected(item)} />
@@ -148,8 +167,8 @@ export function InventoryScreen({ initialTab = 'items' }: { initialTab?: 'items'
             </div>
           ) : (
             <div className="card text-center py-6 text-gray-500">
-              <p className="text-sm">Нет экипировки в сумке</p>
-              <p className="text-xs mt-1">Побеждай боссов, чтобы получать предметы!</p>
+              <p className="text-sm">{t('inventory.noEquipment')}</p>
+              <p className="text-xs mt-1">{t('inventory.noEquipmentHint')}</p>
             </div>
           )}
         </>
@@ -175,34 +194,34 @@ export function InventoryScreen({ initialTab = 'items' }: { initialTab?: 'items'
               </div>
               <div className="flex-1">
                 <h3 className="font-bold text-base" style={{ color: rarityColor(selected.rarity) }}>
-                  {selected.name}
+                  {itemName(selected)}
                 </h3>
-                <p className="text-xs text-gray-400 capitalize">{selected.rarity} · {selected.type}</p>
+                <p className="text-xs text-gray-400 capitalize">{t('rarity.' + selected.rarity)} · {selected.type}</p>
               </div>
               <button onClick={() => setSelected(null)} className="text-gray-500 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <p className="text-sm text-gray-300 mb-3">{selected.description}</p>
+            <p className="text-sm text-gray-300 mb-3">{itemDesc(selected)}</p>
 
             {selected.effect && (
               <div className="text-sm text-teal-400 mb-3">
-                Эффект: +{selected.effect.value} {selected.effect.stat}
+                {t('inventory.effect', { val: selected.effect.value, stat: selected.effect.stat })}
               </div>
             )}
 
             {selected.equipment && (
               <div className="space-y-1 mb-3">
-                {selected.equipment.attack ? <Stat stat="Атака" value={`+${selected.equipment.attack}`} /> : null}
-                {selected.equipment.defense ? <Stat stat="Защита" value={`+${selected.equipment.defense}`} /> : null}
-                {selected.equipment.hp ? <Stat stat="Здоровье" value={`+${selected.equipment.hp}`} /> : null}
+                {selected.equipment.attack ? <Stat stat={t('common.attack')} value={`+${selected.equipment.attack}`} /> : null}
+                {selected.equipment.defense ? <Stat stat={t('common.defense')} value={`+${selected.equipment.defense}`} /> : null}
+                {selected.equipment.hp ? <Stat stat={t('common.hp')} value={`+${selected.equipment.hp}`} /> : null}
               </div>
             )}
 
             {canBelt(selected) && (
               <p className="text-xs text-amber-300/80 mb-3">
-                В бою пьётся только с пояса: до {BELT_STACK} шт. в одном слоте.
+                {t('inventory.beltOnlyHint', { n: BELT_STACK })}
               </p>
             )}
             {beltNote && <p className="text-xs text-red-400 mb-3">{beltNote}</p>}
@@ -216,19 +235,19 @@ export function InventoryScreen({ initialTab = 'items' }: { initialTab?: 'items'
                     setSelected(null);
                   }}
                 >
-                  <Check className="w-4 h-4 inline mr-1" /> Надеть
+                  <Check className="w-4 h-4 inline mr-1" /> {t('common.equip')}
                 </button>
               )}
               {selected.type === 'arena' && (
-                <p className="w-full text-xs text-sky-300">Действует только в бою на арене</p>
+                <p className="w-full text-xs text-sky-300">{t('inventory.arenaOnly')}</p>
               )}
               {canBelt(selected) && (
                 <button className="btn-ghost flex-1 border border-amber-500/30 text-amber-200" onClick={() => toBelt(selected)}>
-                  На пояс
+                  {t('common.putOnBelt')}
                 </button>
               )}
               <button className="btn-ghost" onClick={() => { setSelected(null); setBeltNote(null); }}>
-                Закрыть
+                {t('common.close')}
               </button>
             </div>
           </div>
@@ -253,7 +272,7 @@ function ItemCard({ item, onClick }: { item: InventoryItem; onClick: () => void 
         <ItemArt item={item} size={48} />
       </div>
       <p className="text-xs font-medium text-center truncate w-full" style={{ color }}>
-        {item.name}
+        {itemName(item)}
       </p>
       {item.qty > 1 && (
         <span className="text-xs text-gray-500 mt-0.5">x{item.qty}</span>

@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { useStore } from '@/game/store';
 import { useGame, useArena, grantRewards, updateProgress } from '@/game/actions';
 import {
-  TEAM_NAMES, claimArenaReward, leaveArena, reviveAlly, submitArenaMove, applyTimePotion, drinkArenaItem,
+  teamName, claimArenaReward, leaveArena, reviveAlly, submitArenaMove, applyTimePotion, drinkArenaItem,
   setArenaAuto, type ArenaReward, type Zone,
 } from '@/game/arenaApi';
 import { useArenaRoom, useCountdown } from '@/game/useArenaRoom';
 import { useStrikeQueue } from '@/game/useStrikeQueue';
 import { beltAction, beltContext, consumeBelt } from '@/game/belt';
 import { hapticImpact, hapticNotify } from '@/game/telegram';
+import { t, useLang } from '@/game/i18n';
 import { FighterList } from './FighterList';
 import { BattleScene } from './BattleScene';
 import { ArenaChat } from './ArenaChat';
@@ -17,9 +18,10 @@ import { BeltBar } from './BeltBar';
 import { FoldSection } from './FoldSection';
 import { Loader2, LogOut, Timer, WifiOff, Skull, Trophy } from 'lucide-react';
 
-const MODE_LABEL = { duel: 'Дуэль 1х1', team: 'Отряд 3х3', chaos: 'Хаос' } as const;
+const MODE_LABEL: Record<string, string> = { duel: 'arena.modeDuel', team: 'arena.modeTeam', chaos: 'arena.modeChaos' } as const;
 
 export function ArenaRoom({ roomId, onExit }: { roomId: string; onExit: () => void }) {
+  useLang();
   const { view, messages, offline, clockOffset, refresh } = useArenaRoom(roomId, onExit);
   const game = useStore(useGame);
   const arenaStats = useStore(useArena);
@@ -133,12 +135,12 @@ export function ArenaRoom({ roomId, onExit }: { roomId: string; onExit: () => vo
   const pressBeltSlot = (index: number) => {
     const item = game.belt[index];
     const action = item ? beltAction(item) : null;
-    if (!action) return setActionError('Этот предмет нельзя использовать в бою');
-    if (!isActive || !alive) return setActionError('Пояс работает только во время боя, пока ты в строю');
+    if (!action) return setActionError(t('arena.beltNoUse'));
+    if (!isActive || !alive) return setActionError(t('arena.beltActiveOnly'));
     hapticImpact('light');
     if (action.kind === 'time') return runBelt(index, () => applyTimePotion(roomId));
     if (action.kind === 'item') return runBelt(index, () => drinkArenaItem(roomId, action.code));
-    if (room?.mode === 'duel') return setActionError('Адреналин работает только в командных боях');
+    if (room?.mode === 'duel') return setActionError(t('arena.adrenalineTeamOnly'));
     setActionError(null);
     setAlliesOpen(true);
   };
@@ -154,7 +156,7 @@ export function ArenaRoom({ roomId, onExit }: { roomId: string; onExit: () => vo
     return (
       <div className="flex flex-col items-center justify-center py-24 text-gray-400 gap-3">
         <Loader2 className="w-8 h-8 animate-spin text-teal-400" />
-        <p className="text-sm">{offline ? 'Нет связи с ареной, переподключаюсь...' : 'Вход на арену...'}</p>
+        <p className="text-sm">{offline ? t('arena.noConnectionArena') : t('arena.enteringArena')}</p>
       </div>
     );
   }
@@ -165,25 +167,25 @@ export function ArenaRoom({ roomId, onExit }: { roomId: string; onExit: () => vo
   const won = room.winnerTeam !== null && room.winnerTeam === me.team;
   const draw = room.status === 'finished' && room.winnerTeam === null;
   const isDuel = room.mode === 'duel';
-  const followerName = game.followers[0]?.name ?? 'Последователь';
+  const followerName = game.followers[0]?.name ?? t('follower.name');
 
   return (
     <div className="space-y-2 animate-fade-in pb-4">
       <div className="flex items-center gap-2 h-9 px-2.5 rounded-xl border border-white/10 bg-gray-900/70">
         <p className="flex-1 min-w-0 text-[11px] truncate">
-          <span className="text-gray-500 uppercase tracking-wide">{MODE_LABEL[room.mode]}</span>
-          <span className="text-white font-semibold"> · {room.status === 'waiting' ? 'Сбор бойцов' : room.status === 'active' ? `Раунд ${room.round}` : 'Бой окончен'}</span>
-          {me.team && !isDuel && <span className="text-teal-300"> · «{TEAM_NAMES[me.team]}»</span>}
+          <span className="text-gray-500 uppercase tracking-wide">{t(MODE_LABEL[room.mode])}</span>
+          <span className="text-white font-semibold"> · {room.status === 'waiting' ? t('arena.gathering') : room.status === 'active' ? t('arena.roundN', { n: room.round }) : t('arena.battleOver')}</span>
+          {me.team && !isDuel && <span className="text-teal-300"> · «{teamName(me.team)}»</span>}
         </p>
         {offline && <WifiOff className="w-3.5 h-3.5 text-red-400 shrink-0" />}
         {room.status !== 'finished' && (
           <div
-            title={isActive ? `Тайм на ход: ${room.timeout} сек.` : undefined}
+            title={isActive ? t('arena.timeoutLabel', { n: room.timeout }) : undefined}
             className={`flex items-center gap-1 h-6 px-2 rounded-lg text-xs font-bold tabular-nums shrink-0 ${
               isActive && countdown <= 10 ? 'bg-red-500/20 text-red-300 animate-pulse' : 'bg-black/40 text-white'
             }`}
           >
-            <Timer className="w-3 h-3" /> {countdown}с
+            <Timer className="w-3 h-3" /> {t('arena.seconds', { n: countdown })}
             {isActive && <span className="text-[9px] font-normal text-gray-500">/{room.timeout}</span>}
           </div>
         )}
@@ -192,10 +194,10 @@ export function ArenaRoom({ roomId, onExit }: { roomId: string; onExit: () => vo
       {room.status === 'waiting' && (
         <div className="card text-center py-6">
           <Loader2 className="w-8 h-8 animate-spin text-amber-400 mx-auto mb-3" />
-          <p className="text-white font-semibold">Ищем соперников...</p>
-          <p className="text-sm text-gray-400 mt-1">Бой начнётся через {countdown} сек.</p>
-          <p className="text-xs text-gray-500 mt-3">На арене: {view.participants.map((p) => p.name).join(', ')}</p>
-          <button disabled={busy} onClick={leave} className="btn-ghost text-sm mt-4">Отменить поиск</button>
+          <p className="text-white font-semibold">{t('arena.waiting')}</p>
+          <p className="text-sm text-gray-400 mt-1">{t('arena.startsIn', { n: countdown })}</p>
+          <p className="text-xs text-gray-500 mt-3">{t('arena.onArena', { names: view.participants.map((p) => p.name).join(', ') })}</p>
+          <button disabled={busy} onClick={leave} className="btn-ghost text-sm mt-4">{t('arena.cancelSearch')}</button>
         </div>
       )}
 
@@ -205,25 +207,25 @@ export function ArenaRoom({ roomId, onExit }: { roomId: string; onExit: () => vo
           <div className="relative">
             {won ? <Trophy className="w-12 h-12 text-amber-400 mx-auto mb-2" /> : <Skull className="w-12 h-12 text-gray-400 mx-auto mb-2" />}
             <h2 className={`text-2xl font-bold ${won ? 'text-emerald-400' : draw ? 'text-amber-400' : 'text-red-400'}`}>
-              {won ? 'Победа!' : draw ? 'Ничья' : 'Поражение'}
+              {won ? t('arena.victory') : draw ? t('arena.draw') : t('arena.defeat')}
             </h2>
             {reward ? (
               <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm mt-3">
-                <span className="text-amber-400">+{reward.gold} золота</span>
-                <span className="text-teal-400">+{reward.xp} опыта</span>
+                <span className="text-amber-400">{t('arena.goldReward', { n: reward.gold })}</span>
+                <span className="text-teal-400">{t('arena.xpReward', { n: reward.xp })}</span>
                 <span className={reward.ratingChange >= 0 ? 'text-emerald-400' : 'text-red-400'}>
-                  {reward.ratingChange >= 0 ? '+' : ''}{reward.ratingChange} рейтинга
+                  {t('arena.ratingReward', { sign: reward.ratingChange >= 0 ? '+' : '', n: reward.ratingChange })}
                 </span>
-                {reward.kills > 0 && <span className="text-gray-300">убийств: {reward.kills}</span>}
+                {reward.kills > 0 && <span className="text-gray-300">{t('arena.kills', { n: reward.kills })}</span>}
               </div>
             ) : (
               view.me.ratingChange !== null && (
-                <p className="text-sm text-gray-400 mt-2">Рейтинг: {view.me.ratingChange >= 0 ? '+' : ''}{view.me.ratingChange}</p>
+                <p className="text-sm text-gray-400 mt-2">{t('arena.ratingLabel', { sign: view.me.ratingChange >= 0 ? '+' : '', n: view.me.ratingChange })}</p>
               )
             )}
-            <p className="text-xs text-gray-500 mt-3">Чат открыт, пока ты в комнате</p>
+            <p className="text-xs text-gray-500 mt-3">{t('arena.chatOpen')}</p>
             <button disabled={busy} onClick={leave} className="btn-primary mt-3 inline-flex items-center gap-2">
-              <LogOut className="w-4 h-4" /> Покинуть комнату
+              <LogOut className="w-4 h-4" /> {t('arena.leaveRoom')}
             </button>
           </div>
         </div>
@@ -257,7 +259,7 @@ export function ArenaRoom({ roomId, onExit }: { roomId: string; onExit: () => vo
       {room.status !== 'waiting' && (
         <div className="space-y-1.5">
           <FoldSection
-            title="Снаряжение"
+            title={t('pve.gear')}
             open={gearOpen}
             onToggle={() => setGearOpen((o) => !o)}
             summary={
@@ -272,7 +274,7 @@ export function ArenaRoom({ roomId, onExit }: { roomId: string; onExit: () => vo
             <GearStrip equipped={game.player.equipped} />
           </FoldSection>
           <FoldSection
-            title="Эликсиры и предметы"
+            title={t('arena.elixirsItems')}
             open={beltOpen}
             onToggle={() => setBeltOpen((o) => !o)}
             summary={
@@ -286,7 +288,7 @@ export function ArenaRoom({ roomId, onExit }: { roomId: string; onExit: () => vo
             <BeltBar
               belt={game.belt}
               ctx={beltContext(game, arenaStats.wins)}
-              actionLabel={isActive && alive ? 'Нажми на зелье, чтобы выпить (одно за раунд)' : 'Пояс с зельями — собирается в сумке'}
+              actionLabel={isActive && alive ? t('arena.beltItemHint') : t('arena.beltIdleHint')}
               disabled={!isActive || !alive || busy}
               busyIndex={beltBusy}
               onAction={pressBeltSlot}
@@ -299,14 +301,14 @@ export function ArenaRoom({ roomId, onExit }: { roomId: string; onExit: () => vo
 
       {isActive && !alive && !isDuel && (
         <div className="card text-center py-3 border-red-500/30">
-          <p className="text-xs text-gray-400">Союзник может вернуть тебя адреналином. Следи за боем в чате.</p>
+          <p className="text-xs text-gray-400">{t('arena.allyCanRevive')}</p>
         </div>
       )}
 
       {room.status !== 'waiting' && !isDuel && (
         <div className="space-y-1.5">
           <FighterList
-            title={`Противники · ${TEAM_NAMES[me.team === 1 ? 2 : 1]}`}
+            title={t('arena.enemies', { team: teamName(me.team === 1 ? 2 : 1) })}
             accent="enemy"
             fighters={enemies}
             meId={me.id}
@@ -317,7 +319,7 @@ export function ArenaRoom({ roomId, onExit }: { roomId: string; onExit: () => vo
             onToggle={() => setEnemiesOpen((o) => !o)}
           />
           <FighterList
-            title={`Твоя команда · ${TEAM_NAMES[me.team ?? 1]}`}
+            title={t('arena.allies', { team: teamName(me.team ?? 1) })}
             accent="ally"
             fighters={allies}
             meId={me.id}
@@ -332,17 +334,17 @@ export function ArenaRoom({ roomId, onExit }: { roomId: string; onExit: () => vo
       <ArenaChat roomId={roomId} messages={messages} myName={me.name} />
 
       {isActive && (
-        <button onClick={() => setConfirmLeave(true)} className="btn-ghost w-full text-xs text-gray-500">Покинуть бой</button>
+        <button onClick={() => setConfirmLeave(true)} className="btn-ghost w-full text-xs text-gray-500">{t('arena.leaveBattle')}</button>
       )}
 
       {confirmLeave && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onClick={() => setConfirmLeave(false)}>
           <div className="card w-full max-w-sm text-center animate-pop" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-white mb-2">Покинуть бой?</h3>
-            <p className="text-sm text-gray-400 mb-4">{alive ? 'Ты будешь считаться павшим, и бой может быть проигран.' : 'Ты больше не увидишь чат этого боя.'}</p>
+            <h3 className="text-lg font-bold text-white mb-2">{t('arena.leaveBattleTitle')}</h3>
+            <p className="text-sm text-gray-400 mb-4">{alive ? t('arena.leaveBattleAlive') : t('arena.leaveBattleDead')}</p>
             <div className="grid grid-cols-2 gap-2">
-              <button className="btn-ghost" onClick={() => setConfirmLeave(false)}>Остаться</button>
-              <button className="btn-danger" disabled={busy} onClick={() => { setConfirmLeave(false); leave(); }}>Выйти</button>
+              <button className="btn-ghost" onClick={() => setConfirmLeave(false)}>{t('arena.stay')}</button>
+              <button className="btn-danger" disabled={busy} onClick={() => { setConfirmLeave(false); leave(); }}>{t('arena.exit')}</button>
             </div>
           </div>
         </div>

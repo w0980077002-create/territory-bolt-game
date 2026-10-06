@@ -12,19 +12,20 @@ import { ArenaScreen } from '@/components/ArenaScreen';
 import { ForgeScreen } from '@/components/ForgeScreen';
 import { LeaderboardScreen } from '@/components/LeaderboardScreen';
 import { Home, Swords, Backpack, ShoppingCart, Scroll, User, Trophy, Hammer, Medal, Cloud, CloudOff, Shield } from 'lucide-react';
+import { t, useLang, setLang, type Lang } from '@/game/i18n';
 
 type Tab = 'home' | 'battle' | 'arena' | 'inventory' | 'shop' | 'forge' | 'quests' | 'leaderboard' | 'profile';
 
-const TABS: { id: Tab; label: string; icon: typeof Home }[] = [
-  { id: 'home', label: 'Дом', icon: Home },
-  { id: 'battle', label: 'Бой', icon: Swords },
-  { id: 'arena', label: 'Арена', icon: Trophy },
-  { id: 'inventory', label: 'Сумка', icon: Backpack },
-  { id: 'shop', label: 'Лавка', icon: ShoppingCart },
-  { id: 'forge', label: 'Кузница', icon: Hammer },
-  { id: 'quests', label: 'Квесты', icon: Scroll },
-  { id: 'leaderboard', label: 'Топ', icon: Medal },
-  { id: 'profile', label: 'Профиль', icon: User },
+const TABS: { id: Tab; labelKey: string; icon: typeof Home }[] = [
+  { id: 'home', labelKey: 'tabs.home', icon: Home },
+  { id: 'battle', labelKey: 'tabs.battle', icon: Swords },
+  { id: 'arena', labelKey: 'tabs.arena', icon: Trophy },
+  { id: 'inventory', labelKey: 'tabs.inventory', icon: Backpack },
+  { id: 'shop', labelKey: 'tabs.shop', icon: ShoppingCart },
+  { id: 'forge', labelKey: 'tabs.forge', icon: Hammer },
+  { id: 'quests', labelKey: 'tabs.quests', icon: Scroll },
+  { id: 'leaderboard', labelKey: 'tabs.leaderboard', icon: Medal },
+  { id: 'profile', labelKey: 'tabs.profile', icon: User },
 ];
 
 type SaveStatus = 'saved' | 'saving' | 'error';
@@ -40,6 +41,7 @@ function Splash({ text }: { text: string }) {
 }
 
 function Welcome({ onStart, error }: { onStart: (name: string) => void; error?: string }) {
+  useLang();
   const [name, setName] = useState('');
   return (
     <div className="min-h-screen flex items-center justify-center px-6 relative overflow-hidden" style={{ background: 'var(--color-bg)' }}>
@@ -54,25 +56,26 @@ function Welcome({ onStart, error }: { onStart: (name: string) => void; error?: 
         <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-teal-400 to-teal-700 flex items-center justify-center mb-4 animate-float">
           <Shield className="w-8 h-8 text-white" />
         </div>
-        <h1 className="text-3xl font-bold text-white mb-2">Territory</h1>
-        <p className="text-sm text-gray-400 mb-6">Сражайся с монстрами, побеждай на арене и стань легендой</p>
-        <label className="block text-left text-xs text-gray-400 mb-1">Имя героя</label>
+        <h1 className="text-3xl font-bold text-white mb-2">{t('app.name')}</h1>
+        <p className="text-sm text-gray-400 mb-6">{t('app.welcome')}</p>
+        <label className="block text-left text-xs text-gray-400 mb-1">{t('app.heroName')}</label>
         <input
           className="w-full rounded-lg bg-black/30 border border-white/10 px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-teal-500 transition-colors mb-4"
-          placeholder="Например, Рагнар"
+          placeholder={t('app.heroNamePlaceholder')}
           maxLength={20}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
         {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
-        <button type="submit" className="btn-primary w-full text-lg">Начать игру</button>
-        <p className="text-xs text-gray-500 mt-4">Прогресс сохраняется автоматически</p>
+        <button type="submit" className="btn-primary w-full text-lg">{t('app.startGame')}</button>
+        <p className="text-xs text-gray-500 mt-4">{t('app.progressAuto')}</p>
       </form>
     </div>
   );
 }
 
 function GameShell({ user }: { user: AuthUser }) {
+  useLang();
   const [tab, setTab] = useState<Tab>('home');
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -87,7 +90,7 @@ function GameShell({ user }: { user: AuthUser }) {
         useArena.set({ rating: profile.arenaRating, wins: profile.arenaWins, losses: profile.arenaLosses });
         setLoaded(true);
       })
-      .catch(() => !cancelled && setLoadError('Не удалось загрузить прогресс. Проверь интернет и обнови страницу.'));
+      .catch(() => !cancelled && setLoadError(t('app.loadingError')));
     return () => {
       cancelled = true;
     };
@@ -119,7 +122,7 @@ function GameShell({ user }: { user: AuthUser }) {
   }, [loaded, user.id]);
 
   if (loadError) return <Splash text={loadError} />;
-  if (!loaded) return <Splash text="Загрузка героя..." />;
+  if (!loaded) return <Splash text={t('app.loadingHero')} />;
 
   return (
     <div className="min-h-screen flex flex-col max-w-md mx-auto" style={{ background: 'var(--color-bg)' }}>
@@ -127,9 +130,10 @@ function GameShell({ user }: { user: AuthUser }) {
         className="sticky top-0 z-30 px-4 py-3 flex items-center justify-between backdrop-blur-md"
         style={{ background: 'rgba(12, 17, 23, 0.85)', borderBottom: '1px solid var(--color-border)' }}
       >
-        <h1 className="text-lg font-bold text-white tracking-tight">Territory</h1>
+        <h1 className="text-lg font-bold text-white tracking-tight">{t('app.name')}</h1>
         <div className="flex items-center gap-2">
-          <span title={saveStatus === 'error' ? 'Ошибка сохранения' : 'Сохранено'}>
+          <LangSwitcher />
+          <span title={saveStatus === 'error' ? t('app.saveError') : t('app.saved')}>
             {saveStatus === 'error' ? (
               <CloudOff className="w-4 h-4 text-red-400" />
             ) : (
@@ -161,19 +165,19 @@ function GameShell({ user }: { user: AuthUser }) {
         style={{ background: 'rgba(12, 17, 23, 0.9)', borderTop: '1px solid var(--color-border)' }}
       >
         <div className="flex items-center py-1.5 px-1 overflow-x-auto scrollbar-hide gap-1">
-          {TABS.map((t) => {
-            const Icon = t.icon;
-            const active = tab === t.id;
+          {TABS.map((tabItem) => {
+            const Icon = tabItem.icon;
+            const active = tab === tabItem.id;
             return (
               <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
+                key={tabItem.id}
+                onClick={() => setTab(tabItem.id)}
                 className={`flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-lg transition-all shrink-0 ${
                   active ? 'text-teal-400 bg-teal-500/10' : 'text-gray-500 hover:text-gray-300'
                 }`}
               >
                 <Icon className={`w-5 h-5 transition-transform ${active ? 'scale-110' : ''}`} />
-                <span className="text-[10px] font-medium">{t.label}</span>
+                <span className="text-[10px] font-medium">{t(tabItem.labelKey)}</span>
               </button>
             );
           })}
@@ -184,9 +188,10 @@ function GameShell({ user }: { user: AuthUser }) {
 }
 
 function App() {
+  useLang();
   const { authState, startAsGuest } = useAuth();
 
-  if (authState.status === 'loading') return <Splash text="Загрузка..." />;
+  if (authState.status === 'loading') return <Splash text={t('app.loading')} />;
   if (authState.status === 'guest') return <Welcome onStart={startAsGuest} error={authState.error} />;
   return <GameShell key={authState.user.id} user={authState.user} />;
 }

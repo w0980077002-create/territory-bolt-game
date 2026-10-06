@@ -3,6 +3,7 @@ import { useStore } from '@/game/store';
 import { useGame, buyItem } from '@/game/actions';
 import { generateShopItems } from '@/game/engine';
 import { rarityColor } from '@/game/ui';
+import { t, useLang } from '@/game/i18n';
 import { CheckCircle2, Sword, Shield, Heart, Star } from 'lucide-react';
 import type { GameState, ShopItem } from '@/game/types';
 import { ItemArt } from './ui/ItemArt';
@@ -11,10 +12,10 @@ import { Modal } from './ui/Modal';
 
 type Tab = 'potions' | 'equipment' | 'resources';
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'potions', label: 'Зелья' },
-  { id: 'equipment', label: 'Снаряжение' },
-  { id: 'resources', label: 'Ресурсы' },
+const TABS: { id: Tab; labelKey: string }[] = [
+  { id: 'potions', labelKey: 'shop.potions' },
+  { id: 'equipment', labelKey: 'shop.gear' },
+  { id: 'resources', labelKey: 'shop.resources' },
 ];
 
 const inTab = (item: ShopItem, tab: Tab) =>
@@ -33,14 +34,15 @@ function Price({ item, size = 14 }: { item: ShopItem; size?: number }) {
 }
 
 function resultText(item: ShopItem) {
-  if (item.type === 'stone') return `+${item.amount ?? 1} боевых камней`;
-  if (item.type === 'gem_pack') return `+${item.amount ?? 0} синих кристаллов`;
-  if (item.type === 'material') return '+1 материал для кузницы';
-  if (item.type === 'equipment') return 'Предмет добавлен в инвентарь';
-  return 'Добавлено в инвентарь';
+  if (item.type === 'stone') return t('shop.resultStones', { n: item.amount ?? 1 });
+  if (item.type === 'gem_pack') return t('shop.resultGems', { n: item.amount ?? 0 });
+  if (item.type === 'material') return t('shop.resultMaterial');
+  if (item.type === 'equipment') return t('shop.resultEquipment');
+  return t('shop.resultDefault');
 }
 
 export function ShopScreen() {
+  useLang();
   const state = useStore(useGame);
   const allItems = generateShopItems(state.currentChapter);
   const [tab, setTab] = useState<Tab>('potions');
@@ -50,8 +52,8 @@ export function ShopScreen() {
 
   useEffect(() => {
     if (!result) return;
-    const t = setTimeout(() => setResult(null), 2600);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setResult(null), 2600);
+    return () => clearTimeout(timer);
   }, [result]);
 
   const buy = (item: ShopItem) => {
@@ -69,8 +71,8 @@ export function ShopScreen() {
         <div className="relative flex items-center gap-3">
           <img src="/ic-shop.webp" alt="" className="w-12 h-12 object-contain" />
           <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-bold text-amber-100">Лавка</h2>
-            <p className="text-xs text-gray-400">Зелья, снаряжение и боевые камни</p>
+            <h2 className="text-lg font-bold text-amber-100">{t('shop.title')}</h2>
+            <p className="text-xs text-gray-400">{t('shop.subtitle')}</p>
           </div>
         </div>
         <div className="relative flex flex-wrap gap-2 mt-3">
@@ -81,13 +83,13 @@ export function ShopScreen() {
       </div>
 
       <div className="grid grid-cols-3 gap-1 p-1 rounded-2xl bg-black/30 border border-white/10">
-        {TABS.map((t) => (
+        {TABS.map((tabDef) => (
           <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`h-9 rounded-xl text-xs font-semibold transition-all ${tab === t.id ? 'bg-gradient-to-b from-amber-400 to-amber-600 text-black' : 'text-gray-400'}`}
+            key={tabDef.id}
+            onClick={() => setTab(tabDef.id)}
+            className={`h-9 rounded-xl text-xs font-semibold transition-all ${tab === tabDef.id ? 'bg-gradient-to-b from-amber-400 to-amber-600 text-black' : 'text-gray-400'}`}
           >
-            {t.label}
+            {t(tabDef.labelKey)}
           </button>
         ))}
       </div>
@@ -106,7 +108,7 @@ export function ShopScreen() {
               <div className="h-20 flex items-center justify-center rounded-xl bg-black/30 mb-2">
                 <ItemArt item={item} size={64} />
               </div>
-              <p className="text-xs font-semibold leading-tight line-clamp-2 min-h-[30px]" style={{ color }}>{item.name}</p>
+              <p className="text-xs font-semibold leading-tight line-clamp-2 min-h-[30px]" style={{ color }}>{item.nameKey ? t(item.nameKey) : item.name}</p>
               {item.amount && item.type !== 'equipment' && (
                 <p className="text-[10px] text-gray-400">x{item.amount}</p>
               )}
@@ -119,7 +121,7 @@ export function ShopScreen() {
       </div>
 
       {picked && (
-        <Modal title={picked.name} onClose={() => setPicked(null)}>
+        <Modal title={picked.nameKey ? t(picked.nameKey) : picked.name} onClose={() => setPicked(null)}>
           <PurchaseSheet item={picked} state={state} onBuy={() => buy(picked)} />
         </Modal>
       )}
@@ -128,7 +130,7 @@ export function ShopScreen() {
         <div className="fixed left-1/2 -translate-x-1/2 bottom-24 z-50 w-[calc(100%-32px)] max-w-sm rounded-2xl border border-emerald-400/40 bg-[#0f1f1a]/95 backdrop-blur-md px-3 py-2.5 flex items-center gap-3 shadow-2xl animate-sheet-up">
           <ItemArt item={result.item} size={36} />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-emerald-200 flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> Куплено</p>
+            <p className="text-sm font-semibold text-emerald-200 flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> {t('shop.bought')}</p>
             <p className="text-xs text-gray-300 truncate">{result.text}</p>
           </div>
         </div>
@@ -138,6 +140,7 @@ export function ShopScreen() {
 }
 
 function PurchaseSheet({ item, state, onBuy }: { item: ShopItem; state: GameState; onBuy: () => void }) {
+  useLang();
   const ok = canAfford(state, item);
   const eq = item.equipment;
   const balance = item.priceGems ? state.player.gems : state.player.gold;
@@ -148,29 +151,29 @@ function PurchaseSheet({ item, state, onBuy }: { item: ShopItem; state: GameStat
           <ItemArt item={item} size={80} />
         </div>
         <div className="min-w-0">
-          <p className="text-xs uppercase tracking-wider" style={{ color: rarityColor(item.rarity) }}>{item.rarity}</p>
-          <p className="text-sm text-gray-300 mt-1 leading-relaxed">{item.description}</p>
+          <p className="text-xs uppercase tracking-wider" style={{ color: rarityColor(item.rarity) }}>{t('rarity.' + item.rarity)}</p>
+          <p className="text-sm text-gray-300 mt-1 leading-relaxed">{item.descKey ? t(item.descKey) : item.description}</p>
         </div>
       </div>
       {eq && (
         <div className="grid grid-cols-2 gap-2 text-xs">
-          {eq.attack ? <span className="flex items-center gap-1.5 rounded-lg bg-white/5 px-2.5 h-8 text-orange-300"><Sword className="w-3.5 h-3.5" /> Атака +{eq.attack}</span> : null}
-          {eq.defense ? <span className="flex items-center gap-1.5 rounded-lg bg-white/5 px-2.5 h-8 text-sky-300"><Shield className="w-3.5 h-3.5" /> Защита +{eq.defense}</span> : null}
-          {eq.hp ? <span className="flex items-center gap-1.5 rounded-lg bg-white/5 px-2.5 h-8 text-red-300"><Heart className="w-3.5 h-3.5" /> Здоровье +{eq.hp}</span> : null}
-          {eq.critChance ? <span className="flex items-center gap-1.5 rounded-lg bg-white/5 px-2.5 h-8 text-yellow-300"><Star className="w-3.5 h-3.5" /> Крит +{eq.critChance}%</span> : null}
+          {eq.attack ? <span className="flex items-center gap-1.5 rounded-lg bg-white/5 px-2.5 h-8 text-orange-300"><Sword className="w-3.5 h-3.5" /> {t('common.attack')} +{eq.attack}</span> : null}
+          {eq.defense ? <span className="flex items-center gap-1.5 rounded-lg bg-white/5 px-2.5 h-8 text-sky-300"><Shield className="w-3.5 h-3.5" /> {t('common.defense')} +{eq.defense}</span> : null}
+          {eq.hp ? <span className="flex items-center gap-1.5 rounded-lg bg-white/5 px-2.5 h-8 text-red-300"><Heart className="w-3.5 h-3.5" /> {t('common.hp')} +{eq.hp}</span> : null}
+          {eq.critChance ? <span className="flex items-center gap-1.5 rounded-lg bg-white/5 px-2.5 h-8 text-yellow-300"><Star className="w-3.5 h-3.5" /> {t('common.crit')} +{eq.critChance}%</span> : null}
         </div>
       )}
       <div className="flex items-center justify-between rounded-xl bg-black/30 border border-white/10 px-3 h-11 text-sm">
-        <span className="text-gray-400">Цена</span>
+        <span className="text-gray-400">{t('shop.price')}</span>
         <span className="text-white"><Price item={item} size={18} /></span>
       </div>
-      <p className="text-xs text-gray-500 -mt-2 px-1">У тебя: {balance}</p>
+      <p className="text-xs text-gray-500 -mt-2 px-1">{t('shop.yourBalance', { n: balance })}</p>
       <button
         disabled={!ok}
         onClick={onBuy}
         className="w-full h-12 rounded-2xl bg-gradient-to-b from-amber-400 to-amber-600 text-black font-bold active:scale-[0.98] transition-transform disabled:opacity-40 disabled:bg-none disabled:bg-white/10 disabled:text-gray-400"
       >
-        {ok ? 'Купить' : 'Не хватает средств'}
+        {ok ? t('common.buy') : t('shop.noFunds')}
       </button>
     </div>
   );

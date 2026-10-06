@@ -58,24 +58,33 @@ export function claimDaily(state: GameState, now = Date.now()): GameState | null
 export interface Letter {
   id: string;
   from: string;
+  fromKey?: string;
   title: string;
+  titleKey?: string;
   body: string;
+  bodyKey?: string;
   reward: Reward;
 }
 
 export const MAIL: Letter[] = [
   {
     id: 'welcome',
-    from: 'Совет ярлов',
-    title: 'Добро пожаловать в Territory',
-    body: 'Земли ждут нового героя. Проходи главы похода, сражайся на арене и собирай снаряжение. Прими подарок на первые шаги.',
+    from: '',
+    fromKey: 'mail.welcomeFrom',
+    title: '',
+    titleKey: 'mail.welcomeTitle',
+    body: '',
+    bodyKey: 'mail.welcomeBody',
     reward: { gold: 300, gems: 10, stones: 5 },
   },
   {
     id: 'stones_intro',
-    from: 'Хранитель камней',
-    title: 'Боевые камни',
-    body: 'Каждый бой в походе и в Испытаниях стоит 1 боевой камень. Камни не восстанавливаются сами: получай их за ежедневную награду, задания и в Лавке.',
+    from: '',
+    fromKey: 'mail.stonesFrom',
+    title: '',
+    titleKey: 'mail.stonesTitle',
+    body: '',
+    bodyKey: 'mail.stonesBody',
     reward: { stones: 3 },
   },
 ];

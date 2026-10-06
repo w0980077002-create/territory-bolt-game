@@ -1,4 +1,5 @@
 import type { GameState, InventoryItem } from './types';
+import { t } from './i18n';
 
 export const BELT_STACK = 5;
 
@@ -10,44 +11,51 @@ export interface BeltContext {
 
 interface SlotRule {
   title: string;
+  titleKey: string;
   check: (c: BeltContext) => { open: boolean; progress: string };
 }
 
 const need = (have: number, goal: number) => `${Math.min(have, goal)}/${goal}`;
 
 export const BELT_RULES: SlotRule[] = [
-  { title: 'Открыт сразу', check: () => ({ open: true, progress: '' }) },
+  { title: '', titleKey: 'belt.slot1', check: () => ({ open: true, progress: '' }) },
   {
-    title: 'Уровень 5',
-    check: (c) => ({ open: c.level >= 5, progress: `уровень ${need(c.level, 5)}` }),
+    title: '',
+    titleKey: 'belt.slot2',
+    check: (c) => ({ open: c.level >= 5, progress: t('belt.levelProgress', { val: need(c.level, 5) }) }),
   },
   {
-    title: 'Уровень 12 и 5 дней в игре',
+    title: '',
+    titleKey: 'belt.slot3',
     check: (c) => ({
       open: c.level >= 12 && c.activeDays >= 5,
-      progress: `уровень ${need(c.level, 12)} · дни ${need(c.activeDays, 5)}`,
+      progress: t('belt.levelDaysProgress', { lvl: need(c.level, 12), days: need(c.activeDays, 5) }),
     }),
   },
   {
-    title: 'Уровень 20 и 14 дней в игре',
+    title: '',
+    titleKey: 'belt.slot4',
     check: (c) => ({
       open: c.level >= 20 && c.activeDays >= 14,
-      progress: `уровень ${need(c.level, 20)} · дни ${need(c.activeDays, 14)}`,
+      progress: t('belt.levelDaysProgress', { lvl: need(c.level, 20), days: need(c.activeDays, 14) }),
     }),
   },
   {
-    title: '150 побед на арене',
-    check: (c) => ({ open: c.arenaWins >= 150, progress: `победы ${need(c.arenaWins, 150)}` }),
+    title: '',
+    titleKey: 'belt.slot5',
+    check: (c) => ({ open: c.arenaWins >= 150, progress: t('belt.winsProgress', { val: need(c.arenaWins, 150) }) }),
   },
   {
-    title: 'Клановый квест «Сага рода»',
-    check: () => ({ open: false, progress: 'откроется вместе с кланами' }),
+    title: '',
+    titleKey: 'belt.slot6',
+    check: () => ({ open: false, progress: t('belt.clanHint') }),
   },
   {
-    title: 'Легенда Вальхаллы: уровень 40 и 500 побед на арене',
+    title: '',
+    titleKey: 'belt.slot7',
     check: (c) => ({
       open: c.level >= 40 && c.arenaWins >= 500,
-      progress: `уровень ${need(c.level, 40)} · победы ${need(c.arenaWins, 500)}`,
+      progress: t('belt.levelWinsProgress', { lvl: need(c.level, 40), wins: need(c.arenaWins, 500) }),
     }),
   },
 ];

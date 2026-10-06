@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Lock, Loader2 } from 'lucide-react';
 import { BELT_RULES, BELT_STACK, type BeltContext } from '@/game/belt';
 import { rarityColor } from '@/game/ui';
+import { t, useLang } from '@/game/i18n';
 import type { InventoryItem } from '@/game/types';
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function BeltBar({ belt, ctx, actionLabel, disabled, busyIndex, onAction }: Props) {
+  useLang();
   const [info, setInfo] = useState<number | null>(null);
   const shown = info !== null ? { rule: BELT_RULES[info], check: BELT_RULES[info].check(ctx), item: belt[info] } : null;
 
@@ -56,7 +58,7 @@ export function BeltBar({ belt, ctx, actionLabel, disabled, busyIndex, onAction 
                   <span className="text-[8px] text-gray-400 leading-none truncate w-full px-1 text-center">{item.name}</span>
                 </>
               ) : (
-                <span className="text-[9px] text-gray-500">пусто</span>
+                <span className="text-[9px] text-gray-500">{t('belt.empty')}</span>
               )}
             </button>
           );
@@ -68,11 +70,11 @@ export function BeltBar({ belt, ctx, actionLabel, disabled, busyIndex, onAction 
             shown.item ? (
               <span><span className="text-white font-semibold">{shown.item.name}</span> · {shown.item.description}</span>
             ) : (
-              <span>Слот {info! + 1} свободен — положи сюда зелье из сумки (до {BELT_STACK} шт.)</span>
+              <span>{t('belt.slotFree', { n: info! + 1, max: BELT_STACK })}</span>
             )
           ) : (
             <span className="animate-fade-in">
-              <span className="text-amber-300 font-semibold">Слот {info! + 1}: {shown.rule.title}</span>
+              <span className="text-amber-300 font-semibold">{t('belt.slotRule', { n: info! + 1, title: t(shown.rule.titleKey) })}</span>
               <span> · {shown.check.progress}</span>
             </span>
           )
